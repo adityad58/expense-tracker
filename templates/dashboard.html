@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Spendly{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrap">
+
+  <!-- Header -->
+  <div class="dash-header">
+    <div>
+      <h1 class="dash-title">Namaste, {{ session.user_name }} 👋</h1>
+      <p class="dash-subtitle">Yahan hain tumhare saare expenses</p>
+    </div>
+    <a href="{{ url_for('add_expense') }}" class="btn-primary">+ Add Expense</a>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-cards">
+    <div class="summary-card">
+      <span class="summary-label">Total Expenses</span>
+      <span class="summary-value">₹{{ "%.2f"|format(total) }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Transactions</span>
+      <span class="summary-value">{{ expenses|length }}</span>
+    </div>
+    {% for cat, amt in cat_totals.items() %}
+    <div class="summary-card">
+      <span class="summary-label">{{ cat }}</span>
+      <span class="summary-value">₹{{ "%.2f"|format(amt) }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <form method="GET" action="{{ url_for('dashboard') }}" class="filter-form">
+      <select name="category" class="filter-input">
+        <option value="">All Categories</option>
+        {% for cat in ["Food","Bills","Transport","Health","Shopping","Entertainment","Education","Other"] %}
+          <option value="{{ cat }}" {% if filters.category == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+      <input type="date" name="date_from" class="filter-input"
+             value="{{ filters.date_from }}" placeholder="From date">
+      <input type="date" name="date_to" class="filter-input"
+             value="{{ filters.date_to }}" placeholder="To date">
+      <button type="submit" class="btn-filter">Filter</button>
+      {% if filters.category or filters.date_from or filters.date_to %}
+        <a href="{{ url_for('dashboard') }}" class="btn-clear">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Expenses Table -->
+  {% if expenses %}
+  <div class="table-wrap">
+    <table class="expense-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in expenses %}
+        <tr>
+          <td>
+            <span class="exp-title">{{ e.title }}</span>
+            {% if e.description %}
+              <span class="exp-desc">{{ e.description }}</span>
+            {% endif %}
+          </td>
+          <td><span class="badge badge-{{ e.category|lower }}">{{ e.category }}</span></td>
+          <td class="exp-date">{{ e.date }}</td>
+          <td class="exp-amount">₹{{ "%.2f"|format(e.amount) }}</td>
+          <td class="exp-actions">
+            <a href="{{ url_for('edit_expense', id=e.id) }}" class="btn-edit">Edit</a>
+            <form method="POST" action="{{ url_for('delete_expense', id=e.id) }}"
+                  onsubmit="return confirm('Delete karna chahte ho?')">
+              <button type="submit" class="btn-delete">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p class="empty-icon">₹</p>
+    <p class="empty-text">Koi expense nahi mila.</p>
+    <a href="{{ url_for('add_expense') }}" class="btn-primary">Pehla expense add karo</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
